@@ -61,10 +61,10 @@ export default function VideoPlayer({ manifestUri, courseCode, videoId, r2Path, 
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
           body: JSON.stringify({
-            courseCode,          // optional but nice for logs/analytics
-            videoSlug: videoId,  // your URL slug (optional)
-            videoDbId,           // ✅ real FK to Video.id (Option B)
-            seconds: delta,      // how many seconds to add this tick
+            videoId: videoDbId,
+            seconds: delta,
+            courseCode,
+            videoSlug: videoId,
           }),
         })
         lastReportedTimeRef.current = played
@@ -74,7 +74,7 @@ export default function VideoPlayer({ manifestUri, courseCode, videoId, r2Path, 
           console.error('record-time failed', e)
         }
       }
-    }, 30000)
+    }, 120000)
 
     return () => {
       controller.abort()
