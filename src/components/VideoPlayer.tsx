@@ -74,7 +74,7 @@ export default function VideoPlayer({ manifestUri, courseCode, videoId, r2Path, 
           console.error('record-time failed', e)
         }
       }
-    }, 5000)
+    }, 30000)
 
     return () => {
       controller.abort()

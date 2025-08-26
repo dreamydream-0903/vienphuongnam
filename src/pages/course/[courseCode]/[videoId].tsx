@@ -168,6 +168,7 @@ export default function VideoPage({ manifestUri, courseCode, videoId, videoDbId,
             videoDbId={videoDbId}
           />
         )}
+        {/* <MuxEmbed playbackId={muxPlaybackId} title={`${courseCode}/${videoId}`} /> */}
 
         {/* Choose one: 'moving' or 'tiled' */}
         <CanvasWatermark text={watermarkText} mode="moving" />
