@@ -14,7 +14,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit'
 import { useState } from 'react'
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList
 } from 'recharts'
 
 interface Stat {
@@ -124,11 +124,21 @@ export default function AdminWatchTime({ stats: initialStats }: Props) {
       <Box sx={{ width: '100%', height: 300, mb: 4 }}>
         <ResponsiveContainer>
           <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="videoTitle" />
-            <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
-            <Tooltip formatter={(value: any) => [`${value} min`, 'Watched']} />
-            <Bar dataKey="totalMinutes" />
+            <CartesianGrid stroke="rgba(255,255,255,0.2)" strokeDasharray="3 3" />
+            <XAxis dataKey="videoTitle" tick={{ fill: '#fff' }} />
+            <YAxis
+              tick={{ fill: '#fff' }}
+              label={{ value: 'Minutes', angle: -90, position: 'insideLeft', fill: '#fff' }}
+            />
+            <Tooltip
+              formatter={(value: any) => [`${value} min`, 'Watched']}
+              contentStyle={{ backgroundColor: 'rgba(0,0,0,0.85)', border: 'none' }}
+              itemStyle={{ color: '#fff' }}
+              labelStyle={{ color: '#fff' }}
+            />
+            <Bar dataKey="totalMinutes" fill="#fff">
+              <LabelList dataKey="totalMinutes" position="top" fill="#fff" />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </Box>
