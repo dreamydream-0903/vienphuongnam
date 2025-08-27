@@ -67,25 +67,16 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   }
   const videoDbId = videoRow.id
 
-  // ✅ Per-video allowlist logic:
-  // If the user has any UserVideoAccess rows for *this course*, we treat them as an allowlist.
-  // -> Only the listed videos are allowed.
-  // If the user has none for this course, allow all videos in the course (legacy behavior).
-  const perVideoCount = await prisma.userVideoAccess.count({
-    where: { userId: user.id, video: { courseId: course.id } },
+    // STRICT allowlist: user must have an explicit row (userId, videoId)
+  const allowedThisVideo = await prisma.userVideoAccess.findUnique({
+    where: { userId_videoId: { userId: user.id, videoId: videoDbId } },
   })
-
-  if (perVideoCount > 0) {
-    const allowedThisVideo = await prisma.userVideoAccess.count({
-      where: { userId: user.id, videoId: videoDbId },
-    })
-    if (allowedThisVideo === 0) {
-      return {
-        redirect: {
-          destination: `/course/${courseCode}?no_video_access=1`,
-          permanent: false,
-        },
-      }
+  if (!allowedThisVideo) {
+    return {
+      redirect: {
+        destination: `/course/${courseCode}?no_video_access=1`,
+        permanent: false,
+      },
     }
   }
 

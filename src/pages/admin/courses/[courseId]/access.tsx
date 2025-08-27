@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import {
   Container, Typography, Box, Paper, Stack, FormControl, InputLabel, Select, MenuItem,
-  FormGroup, FormControlLabel, Checkbox, Button
+  FormGroup, FormControlLabel, Checkbox, Button, TextField, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow
 } from '@mui/material'
 
 interface Video { id: string; title: string; r2Path: string }
@@ -23,6 +24,11 @@ export default function AccessPage({ courseId }: { courseId: string }) {
   const [videos, setVideos] = useState<Video[]>([])
   const [users, setUsers] = useState<UserRow[]>([])
   const [selectedUserId, setSelectedUserId] = useState<string>('')
+  const [userQuery, setUserQuery] = useState('')
+  const filteredUsers = users.filter(u =>
+    u.email.toLowerCase().includes(userQuery.toLowerCase())
+  )
+
 
   useEffect(() => {
     const load = async () => {
@@ -58,16 +64,51 @@ export default function AccessPage({ courseId }: { courseId: string }) {
       <Typography variant="h4" gutterBottom>Per-video Access · {course?.code} – {course?.title}</Typography>
       <Paper sx={{ p: 3 }}>
         <Stack direction="row" spacing={3} alignItems="center">
-          <FormControl sx={{ minWidth: 320 }}>
-            <InputLabel>User</InputLabel>
-            <Select
-              label="User"
-              value={selectedUserId}
-              onChange={e => setSelectedUserId(e.target.value)}
-            >
-              {users.map(u => <MenuItem key={u.id} value={u.id}>{u.email}</MenuItem>)}
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', gap: 3 }}>
+            {/* Left: searchable user table */}
+            <Box sx={{ width: 480 }}>
+              <TextField
+                fullWidth
+                label="Search users"
+                placeholder="Type email to filter…"
+                value={userQuery}
+                onChange={(e) => setUserQuery(e.target.value)}
+                sx={{ mb: 2 }}
+              />
+              <TableContainer component={Paper} sx={{ maxHeight: 360 }}>
+                <Table stickyHeader size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Email</TableCell>
+                      <TableCell align="right">Allowed videos</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredUsers.map(u => (
+                      <TableRow
+                        key={u.id}
+                        hover
+                        selected={u.id === selectedUserId}
+                        onClick={() => setSelectedUserId(u.id)}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        <TableCell>{u.email}</TableCell>
+                        <TableCell align="right">{u.allowedVideoIds?.length ?? 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <Box sx={{ mt: 2 }}>
+                <Button variant="outlined" onClick={() => router.back()}>Back</Button>
+              </Box>
+            </Box>
+
+            {/* Right: existing checkbox list for videos + single Save button */}
+            <Box sx={{ flex: 1 }}>
+              {/* keep your existing <Typography>, checkbox list, and the single “Save” button here */}
+            </Box>
+          </Box>
 
           <Button variant="outlined" onClick={() => router.back()}>Back</Button>
         </Stack>

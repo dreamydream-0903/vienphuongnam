@@ -242,12 +242,23 @@ export default function CoursePage({ course, videos }: Props) {
 
       <Snackbar
         open={openDenied}
-        autoHideDuration={6000}
-        onClose={() => setOpenDenied(false)}
+        autoHideDuration={10000}
+        onClose={() => {
+          setOpenDenied(false)
+          // redirect to course main page
+          setIsLoading(false)
+          setLoadingR2Path(null)
+          router.push(`/course/${course.code}`)
+        }}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
-          onClose={() => setOpenDenied(false)}
+          onClose={() => {
+            setOpenDenied(false)
+            setIsLoading(false)
+            setLoadingR2Path(null)
+            router.push(`/course/${course.code}`)
+          }}
           severity="warning"
           variant="filled"
           sx={{ width: '100%' }}

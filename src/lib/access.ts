@@ -19,15 +19,15 @@ export async function userHasVideoAccess(userId: string, videoId: string): Promi
   })
   if (!enrolled) return false
 
-  // Are there any per-video rows for this user in this course?
-  const perVideoCount = await prisma.userVideoAccess.count({
-    where: { userId, video: { courseId: video.courseId } },
-  })
+  // // Are there any per-video rows for this user in this course?
+  // const perVideoCount = await prisma.userVideoAccess.count({
+  //   where: { userId, video: { courseId: video.courseId } },
+  // })
 
-  if (perVideoCount === 0) {
-    // no specific allowlist → default to all videos in the course
-    return true
-  }
+  // if (perVideoCount === 0) {
+  //   // no specific allowlist → default to all videos in the course
+  //   return true
+  // }
 
   const allowed = await prisma.userVideoAccess.findUnique({
     where: { userId_videoId: { userId, videoId } },
