@@ -6,6 +6,8 @@ import { Redis } from '@upstash/redis'
 import { logger } from '@/lib/logger'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getSession } from 'next-auth/react'
+import crypto from 'crypto'
+import { resolveVideoByAnyId, userHasVideoAccess } from '@/lib/access'
 
 const redis = Redis.fromEnv()
 
@@ -29,7 +31,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { courseCode, videoId } = req.query as Record<string, string>
       logger.info({ email: token.email, courseCode, videoId }, 'Playback token requested')
 
-      // 1) entitlement check (same as license endpoint)…
+      // ── 1) Validate input ────────────────────────────────────────────────
+      if (!courseCode || !videoId) {
+        return res.status(400).json({ error: 'Missing courseCode/videoId' })
+      }
+
+      // ── 2) Load user & course ────────────────────────────────────────────
+      const [user, course] = await Promise.all([
+        prisma.user.findUnique({ where: { email: token.email as string } }),
+        prisma.course.findUnique({ where: { code: courseCode } }),
+      ])
+      if (!user || !course) return res.status(404).json({ error: 'Not found' })
+
+      // ── 3) Must be enrolled ─────────────────────────────────────────────
+      const enrolled = await prisma.userCourse.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId: course.id } },
+      })
+      if (!enrolled) return res.status(403).json({ error: 'Forbidden' })
+
+      // ── 4) Resolve canonical video (accepts DB id OR r2Path) ────────────
+      const video = await resolveVideoByAnyId(courseCode, videoId)
+      if (!video) return res.status(404).json({ error: 'Video not found' })
+
+      // ── 5) Per-video allowlist check ─────────────────────────────────────
+      const allowed = await userHasVideoAccess(user.id, video.id)
+      if (!allowed) return res.status(403).json({ error: 'Forbidden' })
+
       // 2) generate JTI one-time ID
       const jti = crypto.randomUUID()
       // 3) sign a 5-minute JWT
@@ -44,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const latency = Date.now() - start
       logger.info({ email: token.email, courseCode, videoId, jti, latency }, 'Playback token issued')
 
-      res.json({ token: playToken })
+      return res.json({ token: playToken })
     } catch (err: any) {
       logger.error({ err: err.message, stack: err.stack, path: req.url }, 'Playback-token error')
       return res.status(500).json({ error: err.message })

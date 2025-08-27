@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import AWS from 'aws-sdk'
 import { rateLimiter } from '@/lib/rateLimiter'
 import { logger } from '@/lib/logger'
+import { userHasVideoAccess, resolveVideoByAnyId } from '@/lib/access'
 
 const kms = new AWS.KMS({ region: process.env.AWS_REGION })
 
@@ -67,6 +68,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: 'Forbidden' })
     }
 
+    // Resolve the canonical Video row by either DB id or r2Path (slug)
+    const video = await resolveVideoByAnyId(courseCode, videoId)
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found' })
+    }
+
+    // Enforce per-video allowlist
+    const allowed = await userHasVideoAccess(user.id, video.id)
+    if (!allowed) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
     // ── 3) Read the raw EME initData (same as in ey.ts) ──────────────
     let rawBody: Buffer
     if (req.body instanceof Buffer) {
@@ -96,8 +109,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // ── 5) Load and decrypt each key from your keystore.json ───────────────
     const record = await prisma.videoKeystore.findUnique({ where: { videoId } })
-
-    console.log('🔥 fetched keystore for', videoId, '- record:', record)
 
     if (!record) {
       return res.status(500).json({ error: `Keystore not found for video ${videoId}` })

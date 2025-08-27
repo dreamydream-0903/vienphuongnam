@@ -10,6 +10,7 @@ import {
 import Grid from '@mui/material/Grid';
 import { useState } from 'react'
 import { useRouter } from 'next/router'
+import { useEffect } from 'react'
 
 interface Video {
   id: string
@@ -78,11 +79,34 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   }
 
   // 5) Fetch videos
-  const videos = await prisma.video.findMany({
-    where: { courseId: course.id },
-    select: { id: true, r2Path: true, title: true },
-    orderBy: { title: 'asc' },
+  const perVideoCount = await prisma.userVideoAccess.count({
+    where: { userId: user.id, video: { courseId: course.id } },
   })
+
+  let videos
+  if (perVideoCount === 0) {
+    // No allowlist → show all videos
+    videos = await prisma.video.findMany({
+      where: { courseId: course.id },
+      select: { id: true, r2Path: true, title: true },
+      orderBy: { title: 'asc' },
+    })
+  } else {
+    // Allowlist present → show only allowed videos
+    const allowed = await prisma.userVideoAccess.findMany({
+      where: { userId: user.id, video: { courseId: course.id } },
+      select: { videoId: true },
+    })
+    const ids = allowed.map(a => a.videoId)
+
+    videos = ids.length
+      ? await prisma.video.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, r2Path: true, title: true },
+        orderBy: { title: 'asc' },
+      })
+      : []
+  }
 
   return {
     props: {
@@ -102,6 +126,24 @@ export default function CoursePage({ course, videos }: Props) {
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('❌ Watch limit reached. Please contact support.')
   const [toastSeverity, setToastSeverity] = useState<'warning' | 'error' | 'success'>('warning')
+
+  const [openDenied, setOpenDenied] = useState(false)
+
+  useEffect(() => {
+    if (!router.isReady) return
+    if (router.query.no_video_access === '1') {
+      setOpenDenied(true)
+      // remove the flag from the URL without a full reload
+      const nextUrl = {
+        pathname: router.pathname,
+        query: { ...router.query } as Record<string, any>,
+      }
+      delete nextUrl.query.no_video_access
+      // NOTE: router.pathname is /course/[courseCode], so we must keep courseCode in query
+      // router.query already contains it, so the replace will build the right URL.
+      router.replace(nextUrl, undefined, { shallow: true })
+    }
+  }, [router.isReady, router.query.no_video_access])
 
   const handleVideoClick = async (r2Path: string) => {
     if (isLoading) return
@@ -197,6 +239,22 @@ export default function CoursePage({ course, videos }: Props) {
         <CircularProgress />
         <Box sx={{ ml: 2, fontWeight: 500 }}>Preparing your video…</Box>
       </Backdrop>
+
+      <Snackbar
+        open={openDenied}
+        autoHideDuration={6000}
+        onClose={() => setOpenDenied(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setOpenDenied(false)}
+          severity="warning"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          Bạn không có quyền xem video này trong khóa học. (No access to that video.)
+        </Alert>
+      </Snackbar>
 
       {/* Toast */}
       <Snackbar

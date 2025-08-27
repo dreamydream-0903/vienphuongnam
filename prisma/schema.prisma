@@ -19,6 +19,7 @@ model User {
   courses      UserCourse[]
   watchRecords WatchRecord[]
   watchTime    WatchTime[]
+  videoAccesses UserVideoAccess[]
 }
 
 model Course {
@@ -39,6 +40,7 @@ model Video {
   course       Course        @relation(fields: [courseId], references: [id])
   watchRecords WatchRecord[]
   watchTime    WatchTime[]
+  accessEntries UserVideoAccess[]
 }
 
 model UserCourse {
@@ -137,4 +139,16 @@ model MuxMapping {
 
   @@unique([courseId, videoSlug])
   @@index([playbackId])
+}
+
+model UserVideoAccess {
+  userId  String
+  videoId String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@id([userId, videoId])
+  @@index([videoId])
 }

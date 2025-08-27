@@ -62,6 +62,14 @@ export default function VideoListAdmin({ course, videos }: Props) {
           >
             New Video
           </Button>
+          <Button
+            variant="outlined"
+            component={Link}
+            href={`/admin/courses/${course.id}/access`}
+          >
+            Per-video access
+          </Button>
+
           <Button onClick={() => signOut({ callbackUrl: '/' })}>Logout</Button>
         </Stack>
       </Stack>
