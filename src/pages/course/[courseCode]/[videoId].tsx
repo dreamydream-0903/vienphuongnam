@@ -114,8 +114,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     ctx.req.socket.remoteAddress ||
     'unknown-ip'
 
-  const nowVN = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })
-  const line1 = `${session.user.email} • ${nowVN} • ${ip}`
+  const line1 = `${session.user.email} • ${ip}`
   const watermarkText = `${line1} - Viện Phương Nam - Không chia sẻ dưới mọi hình thức`
 
   // NEW: Lookup Mux mapping (if any)

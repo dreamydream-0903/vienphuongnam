@@ -246,18 +246,14 @@ export default function CoursePage({ course, videos }: Props) {
         onClose={() => {
           setOpenDenied(false)
           // redirect to course main page
-          setIsLoading(false)
-          setLoadingR2Path(null)
-          router.push(`/course/${course.code}`)
+          window.location.reload()
         }}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
           onClose={() => {
             setOpenDenied(false)
-            setIsLoading(false)
-            setLoadingR2Path(null)
-            router.push(`/course/${course.code}`)
+            window.location.reload()
           }}
           severity="warning"
           variant="filled"
