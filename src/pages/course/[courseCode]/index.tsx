@@ -164,7 +164,7 @@ export default function CoursePage({ course, videos }: Props) {
 
       console.log('[videoWatchCount]', data.videoWatchCount)
 
-      if (data.videoWatchCount >= 5) {
+      if (data.videoWatchCount >= 7) {
         setToastMsg('❌ Watch limit reached. Please contact support.')
         setToastSeverity('warning')
         setToastOpen(true)
