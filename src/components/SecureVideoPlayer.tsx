@@ -28,7 +28,7 @@ export default function SecureVideoPlayer({ manifestUri, courseCode, videoId, r2
         const viewRes = await fetch(`/api/course/view-count?courseCode=${courseCode}&r2Path=${r2Path}`)
         const viewData = await viewRes.json()
 
-        const allowPlayback = data.ok && viewData.videoWatchCount < 3
+        const allowPlayback = data.ok && viewData.videoWatchCount < 5
 
         setIsReady(allowPlayback)
         setViewLimitReached(!allowPlayback)
